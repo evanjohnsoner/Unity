@@ -8,7 +8,7 @@ local player = Players.LocalPlayer
 local RadialMenu = {}
 RadialMenu.onOptionSelected = function(_) end
 
-local gui, frame, centerLabel, statusLabel
+local gui, frame, centerCircle, centerLabel, statusLabel
 local BUTTONS = {}
 local selectedIndex = 1
 local altHeld = false
@@ -28,9 +28,9 @@ local outwardOffset = 24
 local tweenInfo = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 local function makeCircle(f)
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(1, 0)
-	corner.Parent = f
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(1, 0)
+	c.Parent = f
 end
 
 function RadialMenu.Init(parent)
@@ -45,15 +45,23 @@ function RadialMenu.Init(parent)
 	frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 	frame.Size = UDim2.new(0, 0, 0, 0)
-	frame.BackgroundTransparency = 1
 	frame.SizeConstraint = Enum.SizeConstraint.RelativeYY
+	frame.BackgroundTransparency = 1
 	frame.Visible = false
 	frame.Parent = gui
 
-	local centerCircle = Instance.new("Frame", frame)
+	local selectSound = Instance.new("Sound", frame)
+	selectSound.SoundId = "rbxassetid://876939830"
+	selectSound.Volume = 0.6
+
+	local confirmSound = Instance.new("Sound", frame)
+	confirmSound.SoundId = "rbxassetid://90698049598280"
+	confirmSound.Volume = 0.6
+
+	centerCircle = Instance.new("Frame", frame)
 	centerCircle.AnchorPoint = Vector2.new(0.5, 0.5)
 	centerCircle.Position = UDim2.new(0.5, 0, 0.5, 0)
-	centerCircle.Size = UDim2.new(0, 90, 0, 90)
+	centerCircle.Size = UDim2.new(0, 0, 0, 0)
 	centerCircle.BackgroundColor3 = mainColor
 	centerCircle.BackgroundTransparency = 0.3
 	centerCircle.BorderSizePixel = 0
@@ -78,6 +86,7 @@ function RadialMenu.Init(parent)
 	statusLabel.Font = Enum.Font.Gotham
 	statusLabel.TextSize = 14
 	statusLabel.Text = ""
+	statusLabel.TextTransparency = 0.1
 
 	for i, opt in ipairs(OPTIONS) do
 		local angle = math.rad((i - 1) * 120 - 90)
@@ -93,8 +102,31 @@ function RadialMenu.Init(parent)
 		btn.Parent = frame
 		makeCircle(btn)
 
+		local icon = Instance.new("ImageLabel", btn)
+		icon.AnchorPoint = Vector2.new(0.5, 0.5)
+		icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+		icon.Size = UDim2.new(0.7, 0, 0.7, 0)
+		icon.BackgroundTransparency = 1
+		icon.ImageColor3 = Color3.new(1, 1, 1)
+		icon.ScaleType = Enum.ScaleType.Stretch
+
+		if opt.Name == "AIM" then
+			icon.Image = "rbxassetid://8445471713"
+			icon.ImageRectOffset = Vector2.new(204, 504)
+			icon.ImageRectSize = Vector2.new(96, 96)
+		elseif opt.Name == "ESP" then
+			icon.Image = "rbxassetid://8445470984"
+			icon.ImageRectOffset = Vector2.new(804, 804)
+			icon.ImageRectSize = Vector2.new(96, 96)
+		elseif opt.Name == "CLOSE" then
+			icon.Image = "rbxassetid://8445470559"
+			icon.ImageRectOffset = Vector2.new(804, 604)
+			icon.ImageRectSize = Vector2.new(96, 96)
+		end
+
 		BUTTONS[i] = {
 			frame = btn,
+			icon = icon,
 			dir = dir,
 			name = opt.Name,
 			display = opt.Display,
@@ -111,6 +143,7 @@ function RadialMenu.Init(parent)
 		if altHeld and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			selectedIndex += 1
 			if selectedIndex > #BUTTONS then selectedIndex = 1 end
+			selectSound:Play()
 		end
 	end)
 
@@ -118,6 +151,7 @@ function RadialMenu.Init(parent)
 		if input.KeyCode == Enum.KeyCode.LeftAlt then
 			altHeld = false
 			RadialMenu.Hide()
+			confirmSound:Play()
 			local selected = BUTTONS[selectedIndex]
 			if selected.name ~= "CLOSE" then
 				RadialMenu.onOptionSelected(selected.name)
@@ -129,7 +163,11 @@ function RadialMenu.Init(parent)
 		if not altHeld then return end
 		local selected = BUTTONS[selectedIndex]
 		centerLabel.Text = selected.display
-		statusLabel.Text = ""
+		statusLabel.Text =
+			(selected.name == "ESP" and (_G.ESP and "Status: ON" or "Status: OFF"))
+			or (selected.name == "AIM" and (_G.AIM and "Status: ON" or "Status: OFF"))
+			or ""
+
 		for i, b in ipairs(BUTTONS) do
 			local isSelected = (i == selectedIndex)
 			local size = isSelected and hoverSize or baseSize
@@ -149,10 +187,12 @@ end
 function RadialMenu.Show()
 	frame.Visible = true
 	frame:TweenSize(UDim2.new(0.3, 0, 0.3, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.25, true)
+	centerCircle:TweenSize(UDim2.new(0, 90, 0, 90), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
 end
 
 function RadialMenu.Hide()
 	frame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.2, true)
+	centerCircle:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.2, true)
 	task.delay(0.22, function() frame.Visible = false end)
 end
 

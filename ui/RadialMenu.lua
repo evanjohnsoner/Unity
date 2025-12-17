@@ -3,8 +3,6 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
-local player = Players.LocalPlayer
-
 local RadialMenu = {}
 RadialMenu.onOptionSelected = function(_) end
 
@@ -85,7 +83,6 @@ function RadialMenu.Init(parent)
 	statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 	statusLabel.Font = Enum.Font.Gotham
 	statusLabel.TextSize = 14
-	statusLabel.Text = ""
 	statusLabel.TextTransparency = 0.1
 
 	for i, opt in ipairs(OPTIONS) do
